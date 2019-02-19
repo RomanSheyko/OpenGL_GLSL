@@ -17,7 +17,6 @@ SDL_GLContext maincontext;
 GLuint vaoHandle;
 GLuint programHandle;
 
-void drawCube(float xrf, float yrf, float zrf);
 bool SetOpenGLAttributes();
 void PrintSDL_GL_Attributes();
 void CheckSDLError(int line);
@@ -26,6 +25,7 @@ void Run();
 void Cleanup();
 GLuint loadShader(const char *path, GLenum shader_type);
 GLchar* loadShaderAsString(const char *path);
+void makeShape();
 
 
 bool Init()
@@ -95,44 +95,39 @@ bool Init()
     }
     else {
         glUseProgram(programHandle);
+        glDeleteShader(vertShader);
+        glDeleteShader(fragShader);
     }
 
+    return true;
+}
+
+void makeShape()
+{
     float positionData[] = {
             -0.8f, -0.8f, 0.0f,
             0.8f, -0.8f, 0.0f,
-            0.0f, 0.8f, 0.0f
+            -0.8f, 0.8f, 0.0f,
+
+            0.8f, 0.8f, 0.0f,
+            0.8f, -0.8f, 0.0f,
+            -0.8f, 0.8f, 0.0f
     };
 
-    float colorData[] = {
-            1.0f, 0.0f, 0.0f,
-            0.0f, 1.0f, 0.0f,
-            0.0f, 0.0f, 1.0f
-    };
-
-    GLuint vboHandles[2];
-    glGenBuffers(2, vboHandles);
-    GLuint positionBufferHandle = vboHandles[0];
-    GLuint colorBufferHandle = vboHandles[1];
+    GLuint vboHandles;
+    glGenBuffers(1, &vboHandles);
+    GLuint positionBufferHandle = vboHandles;
 
     glBindBuffer(GL_ARRAY_BUFFER, positionBufferHandle);
-    glBufferData(GL_ARRAY_BUFFER, 9 * sizeof(float), positionData, GL_STATIC_DRAW);
-
-    glBindBuffer(GL_ARRAY_BUFFER, colorBufferHandle);
-    glBufferData(GL_ARRAY_BUFFER, 9 * sizeof(float), colorData, GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, 18 * sizeof(float), positionData, GL_STATIC_DRAW);
 
     glGenVertexArrays(1, &vaoHandle);
     glBindVertexArray(vaoHandle);
 
     glEnableVertexAttribArray(0);
-    glEnableVertexAttribArray(1);
 
     glBindBuffer(GL_ARRAY_BUFFER, positionBufferHandle);
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, NULL);
-
-    glBindBuffer(GL_ARRAY_BUFFER, colorBufferHandle);
-    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 0, NULL);
-
-    return true;
 }
 
 bool SetOpenGLAttributes()
@@ -173,18 +168,9 @@ int main(int argc, char ** argv) {
     if (!Init())
         return -1;
 
+    makeShape();
+
     printVersion();
-    /*
-    glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
-    glClearDepth(1.0);
-    glDepthFunc(GL_LESS);
-    glEnable(GL_DEPTH_TEST);
-     */
-    //glShadeModel(GL_SMOOTH);
-    //glMatrixMode(GL_PROJECTION);
-    //glLoadIdentity();
-    //gluPerspective(45.0f, (float)width / (float) height, 0.1f, 100.0f);
-    //glMatrixMode(GL_MODELVIEW);
 
     Run();
     return 0;
@@ -207,7 +193,7 @@ void Run()
         glClear(GL_COLOR_BUFFER_BIT);
 
         glBindVertexArray(vaoHandle);
-        glDrawArrays(GL_TRIANGLES, 0, 3);
+        glDrawArrays(GL_TRIANGLES, 0, 6);
 
         SDL_GL_SwapWindow(window);
 
@@ -334,56 +320,3 @@ void printVersion()
     printf("GL Version (integer): %d.%d\n", major, minor);
     printf("GLSL Version        : %s\n", glslVersion);
 }
-
-/*
-void drawCube(float xrf, float yrf, float zrf){
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-    glLoadIdentity();
-    glTranslatef(0.0f, 0.0f, -7.0f);
-
-    glRotatef(xrf, 1.0f, 0.0f, 0.0f);
-    glRotatef(yrf, 0.0f, 1.0f, 0.0f);
-    glRotatef(zrf, 0.0f, 0.0f, 1.0f);
-
-    glBegin(GL_QUADS);
-
-    glColor3f(0.0f, 1.0f, 0.0f);
-    glVertex3f( 1.0f, 1.0f, -1.0f);
-    glVertex3f(-1.0f, 1.0f, -1.0f);
-    glVertex3f(-1.0f, 1.0f,  1.0f);
-    glVertex3f( 1.0f, 1.0f,  1.0f);
-
-    glColor3f(1.0f, 0.5f, 0.0f);
-    glVertex3f( 1.0f, -1.0f,  1.0f);
-    glVertex3f(-1.0f, -1.0f,  1.0f);
-    glVertex3f(-1.0f, -1.0f, -1.0f);
-    glVertex3f( 1.0f, -1.0f, -1.0f);
-
-    glColor3f(1.0f, 0.0f, 0.0f);
-    glVertex3f( 1.0f,  1.0f, 1.0f);
-    glVertex3f(-1.0f,  1.0f, 1.0f);
-    glVertex3f(-1.0f, -1.0f, 1.0f);
-    glVertex3f( 1.0f, -1.0f, 1.0f);
-
-    glColor3f(1.0f,1.0f,0.0f);
-    glVertex3f( 1.0f, -1.0f, -1.0f);
-    glVertex3f(-1.0f, -1.0f, -1.0f);
-    glVertex3f(-1.0f,  1.0f, -1.0f);
-    glVertex3f( 1.0f,  1.0f, -1.0f);
-
-    glColor3f(0.0f,0.0f,1.0f);
-    glVertex3f(-1.0f,  1.0f,  1.0f);
-    glVertex3f(-1.0f,  1.0f, -1.0f);
-    glVertex3f(-1.0f, -1.0f, -1.0f);
-    glVertex3f(-1.0f, -1.0f,  1.0f);
-
-    glColor3f(1.0f,0.0f,1.0f);
-    glVertex3f( 1.0f,  1.0f, -1.0f);
-    glVertex3f( 1.0f,  1.0f,  1.0f);
-    glVertex3f( 1.0f, -1.0f,  1.0f);
-    glVertex3f( 1.0f, -1.0f, -1.0f);
-
-    glEnd();
-
-}*/
